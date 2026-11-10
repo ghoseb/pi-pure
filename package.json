@@ -1,6 +1,6 @@
 {
   "name": "@ghoseb/pi-pure",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "A set of simple pi extensions to provide an uncluttered experience.",
   "keywords": [
     "editor",
