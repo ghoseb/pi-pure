@@ -133,4 +133,58 @@ describe("pure-status extension", () => {
     footer.dispose?.();
     expect(h.hasGitBranchListener()).toBe(false);
   });
+
+  describe("extension statuses", () => {
+    it("renders one line when no extension sets a status", async () => {
+      const { footer } = await setup();
+      expect(footer.render(120)).toHaveLength(1);
+    });
+
+    it("renders the statuses on a second line, in key order", async () => {
+      const { footer } = await setup({ statuses: { "z-ext": "zeta", "a-ext": "alpha" } });
+      const lines = footer.render(120);
+      expect(lines).toHaveLength(2);
+      expect(lines[0]).toContain("test-model");
+      expect(lines[1]).toBe("alpha · zeta");
+    });
+
+    it("shows a status that an extension sets after the footer is installed", async () => {
+      const { h, footer } = await setup();
+      h.statuses.set("lint", "lint: ok");
+      expect(footer.render(120)[1]).toBe("lint: ok");
+      h.statuses.delete("lint");
+      expect(footer.render(120)).toHaveLength(1);
+    });
+
+    it("hides all statuses when the setting turns them off", async () => {
+      const { footer } = await setup({
+        statuses: { lint: "lint: ok" },
+        settings: { "pi-pure": { status: { extensionStatuses: false } } },
+      });
+      expect(footer.render(120)).toHaveLength(1);
+    });
+
+    it("hides the statuses with a hidden key", async () => {
+      const { footer } = await setup({
+        statuses: { lint: "lint: ok", mcp: "mcp: 2 servers" },
+        settings: { "pi-pure": { status: { hiddenStatusKeys: ["mcp"] } } },
+      });
+      expect(footer.render(120)[1]).toBe("lint: ok");
+    });
+
+    it("renders one line when all statuses are hidden", async () => {
+      const { footer } = await setup({
+        statuses: { mcp: "mcp: 2 servers" },
+        settings: { "pi-pure": { status: { hiddenStatusKeys: ["mcp"] } } },
+      });
+      expect(footer.render(120)).toHaveLength(1);
+    });
+
+    it("cuts the status line to the terminal width", async () => {
+      const { footer } = await setup({ statuses: { a: "x".repeat(200) } });
+      const statusLine = footer.render(40)[1];
+      expect(visibleWidth(statusLine)).toBeLessThanOrEqual(40);
+      expect(statusLine).toContain("...");
+    });
+  });
 });

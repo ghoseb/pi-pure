@@ -80,6 +80,10 @@ export interface HarnessOptions {
   thinkingLevel?: ReturnType<ExtensionAPI["getThinkingLevel"]>;
   contextPercent?: number | null;
   gitBranch?: string | null;
+  /** pi's effective settings, as `pi.getSettings()` returns them. */
+  settings?: Record<string, unknown>;
+  /** Extension status texts, as set with `ctx.ui.setStatus()`. */
+  statuses?: Record<string, string>;
   session?: SessionState;
 }
 
@@ -92,6 +96,7 @@ export function createHarness(opts: HarnessOptions = {}) {
   let editorFactory: EditorFactory | undefined;
   let gitBranchListener: (() => void) | undefined;
   let renderRequests = 0;
+  const statuses = new Map(Object.entries(opts.statuses ?? {}));
 
   const api = {
     on: (event: string, handler: Handler) => {
@@ -102,6 +107,7 @@ export function createHarness(opts: HarnessOptions = {}) {
     },
     getSessionName: () => opts.sessionName,
     getThinkingLevel: () => opts.thinkingLevel ?? "off",
+    getSettings: () => structuredClone(opts.settings ?? {}),
   } as unknown as ExtensionAPI;
 
   const ui = {
@@ -149,6 +155,7 @@ export function createHarness(opts: HarnessOptions = {}) {
     const tui = { requestRender: () => renderRequests++ } as unknown as TUI;
     const footerData = {
       getGitBranch: () => opts.gitBranch ?? null,
+      getExtensionStatuses: () => statuses,
       onBranchChange: (cb: () => void) => {
         gitBranchListener = cb;
         return () => {
@@ -181,5 +188,7 @@ export function createHarness(opts: HarnessOptions = {}) {
     /** Whether a git branch listener is currently subscribed. */
     hasGitBranchListener: () => gitBranchListener !== undefined,
     renderRequests: () => renderRequests,
+    /** Extension status texts; change them to simulate `ctx.ui.setStatus()`. */
+    statuses,
   };
 }

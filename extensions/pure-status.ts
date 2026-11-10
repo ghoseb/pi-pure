@@ -4,6 +4,11 @@
  * Left:  [session] model thinking · cwd branch
  * Right: $cost ████▋▒▒▒▒▒▒▒▒▒▒▒ 28% · 42 τ/s
  *
+ * A second line shows the statuses of other extensions. Settings, in pi's
+ * settings.json:
+ *
+ *   "pi-pure": { "status": { "extensionStatuses": true, "hiddenStatusKeys": [] } }
+ *
  * Usage: pi -e extensions/pure-status.ts
  */
 
@@ -161,6 +166,68 @@ export function joinLeftRight(left: string, right: string, width: number): strin
   return fittedLeft + pad + right;
 }
 
+// ── Settings ─────────────────────────────────────────────────────────────────
+
+export interface StatusSettings {
+  /** Show the statuses that other extensions set with `ctx.ui.setStatus()`. */
+  extensionStatuses: boolean;
+  /** Status keys not to show. */
+  hiddenStatusKeys: ReadonlySet<string>;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+/**
+ * Read the `pi-pure.status` settings from pi's effective settings. Pi does
+ * not validate settings files, so a value of the wrong type gets the default.
+ */
+export function readStatusSettings(settings: unknown): StatusSettings {
+  const pure = isRecord(settings) ? settings["pi-pure"] : undefined;
+  const status = isRecord(pure) ? pure.status : undefined;
+  const { extensionStatuses, hiddenStatusKeys } = isRecord(status) ? status : {};
+  return {
+    extensionStatuses: typeof extensionStatuses === "boolean" ? extensionStatuses : true,
+    hiddenStatusKeys: new Set(
+      Array.isArray(hiddenStatusKeys)
+        ? hiddenStatusKeys.filter((key): key is string => typeof key === "string")
+        : [],
+    ),
+  };
+}
+
+/** The extension statuses that the settings allow. */
+export function shownStatuses(
+  statuses: ReadonlyMap<string, string>,
+  settings: StatusSettings,
+): Map<string, string> {
+  if (!settings.extensionStatuses) {
+    return new Map();
+  }
+  return new Map([...statuses].filter(([key]) => !settings.hiddenStatusKeys.has(key)));
+}
+
+// ── Extension statuses ───────────────────────────────────────────────────────
+
+/**
+ * Join the status texts that extensions set with `ctx.ui.setStatus()`, in
+ * key order, as pi's own footer does. Newlines and tabs become spaces, and
+ * empty texts are dropped.
+ */
+export function formatStatuses(statuses: ReadonlyMap<string, string>, separator: string): string {
+  return [...statuses]
+    .toSorted(([a], [b]) => a.localeCompare(b))
+    .map(([, text]) =>
+      text
+        .replaceAll(/[\r\n\t]/gu, " ")
+        .replaceAll(/ +/gu, " ")
+        .trim(),
+    )
+    .filter((text) => text !== "")
+    .join(separator);
+}
+
 // ── Extension ────────────────────────────────────────────────────────────────
 
 /** Rolling window size for the tok/s median. */
@@ -197,6 +264,9 @@ export default function (pi: ExtensionAPI) {
   pi.on("session_start", (_event, ctx) => {
     // Reset per-session state — same handlers are reused across session changes.
     tpsSamples.length = 0;
+    // Read once per session: getSettings() copies all settings, and the footer
+    // renders on every frame. /reload reads the settings again.
+    const settings = readStatusSettings(pi.getSettings());
 
     // Preload tok/s window from existing session history.
     for (const entry of ctx.sessionManager.getBranch()) {
@@ -269,7 +339,17 @@ export default function (pi: ExtensionAPI) {
             theme.fg("dim", ` ${formatContextPct(pct)} `) +
             tpsStr;
 
-          return [joinLeftRight(left, right, width)];
+          const line = joinLeftRight(left, right, width);
+
+          // ── Extension statuses ────────────────────────────
+          const statuses = formatStatuses(
+            shownStatuses(footerData.getExtensionStatuses(), settings),
+            theme.fg("dim", " · "),
+          );
+          if (statuses === "") {
+            return [line];
+          }
+          return [line, truncateToWidth(statuses, width, theme.fg("dim", "..."))];
         },
       };
     });

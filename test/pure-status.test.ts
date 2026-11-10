@@ -5,6 +5,9 @@ import {
   barColor,
   formatContextPct,
   formatCwd,
+  formatStatuses,
+  readStatusSettings,
+  shownStatuses,
   joinLeftRight,
   median,
   renderBar,
@@ -186,5 +189,99 @@ describe("joinLeftRight", () => {
     const line = joinLeftRight("left", "a very long right part", 10);
     expect(visibleWidth(line)).toBeLessThanOrEqual(10);
     expect(line.startsWith("a very")).toBe(true);
+  });
+});
+
+// ── formatStatuses ────────────────────────────────────────────────────────────
+
+describe("formatStatuses", () => {
+  it("joins the statuses in key order", () => {
+    const statuses = new Map([
+      ["zeta", "Z"],
+      ["alpha", "A"],
+      ["mid", "M"],
+    ]);
+    expect(formatStatuses(statuses, " | ")).toBe("A | M | Z");
+  });
+
+  it("replaces newlines and tabs with one space and trims the text", () => {
+    const statuses = new Map([["a", "  one\ntwo\r\n\tthree   four "]]);
+    expect(formatStatuses(statuses, " | ")).toBe("one two three four");
+  });
+
+  it("drops empty and blank statuses", () => {
+    const statuses = new Map([
+      ["a", "A"],
+      ["b", ""],
+      ["c", " \n "],
+      ["d", "D"],
+    ]);
+    expect(formatStatuses(statuses, " | ")).toBe("A | D");
+  });
+
+  it("returns an empty string when there are no statuses", () => {
+    expect(formatStatuses(new Map(), " | ")).toBe("");
+  });
+});
+
+// ── Settings ──────────────────────────────────────────────────────────────────
+
+describe("readStatusSettings", () => {
+  const defaults = { extensionStatuses: true, hiddenStatusKeys: new Set() };
+
+  it.each([
+    ["no settings", {}],
+    ["no pi-pure settings", { theme: "dark" }],
+    ["no status settings", { "pi-pure": {} }],
+    ["settings that are not an object", "settings"],
+    ["pi-pure settings that are an array", { "pi-pure": [] }],
+    ["status settings that are null", { "pi-pure": { status: null } }],
+  ])("gives the defaults for %s", (_name, settings) => {
+    expect(readStatusSettings(settings)).toEqual(defaults);
+  });
+
+  it("reads the settings", () => {
+    const settings = {
+      "pi-pure": { status: { extensionStatuses: false, hiddenStatusKeys: ["mcp"] } },
+    };
+    expect(readStatusSettings(settings)).toEqual({
+      extensionStatuses: false,
+      hiddenStatusKeys: new Set(["mcp"]),
+    });
+  });
+
+  it.each([
+    ["a string", "no", "mcp"],
+    ["a number", 0, 0],
+    ["null", null, null],
+  ])("gives the defaults for values that are %s", (_name, extensionStatuses, hiddenStatusKeys) => {
+    const settings = { "pi-pure": { status: { extensionStatuses, hiddenStatusKeys } } };
+    expect(readStatusSettings(settings)).toEqual(defaults);
+  });
+
+  it("ignores hidden keys that are not strings", () => {
+    const settings = { "pi-pure": { status: { hiddenStatusKeys: ["mcp", 1, null, "lint"] } } };
+    expect(readStatusSettings(settings).hiddenStatusKeys).toEqual(new Set(["mcp", "lint"]));
+  });
+});
+
+describe("shownStatuses", () => {
+  const statuses = new Map([
+    ["lint", "ok"],
+    ["mcp", "2 servers"],
+  ]);
+
+  it("shows all statuses by default", () => {
+    expect(shownStatuses(statuses, readStatusSettings({}))).toEqual(statuses);
+  });
+
+  it("shows no statuses when extension statuses are off", () => {
+    const settings = { extensionStatuses: false, hiddenStatusKeys: new Set<string>() };
+    expect(shownStatuses(statuses, settings).size).toBe(0);
+  });
+
+  it("removes the hidden keys", () => {
+    const settings = { extensionStatuses: true, hiddenStatusKeys: new Set(["mcp"]) };
+    expect([...shownStatuses(statuses, settings)]).toEqual([["lint", "ok"]]);
   });
 });

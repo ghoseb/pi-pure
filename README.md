@@ -25,7 +25,7 @@ This extension replaces the pi input editor with an editor in a rounded box.
 
 ### pure-status
 
-This extension replaces the pi footer with one status line.
+This extension replaces the pi footer with a status line.
 
 ```text
 [ session ] model high · parent/dir main        $0.42 ████▋▒▒▒▒▒▒▒▒▒▒▒ 28% · 42 τ/s
@@ -54,6 +54,58 @@ The right side shows these items:
    The line shows the median speed of the last 5 responses.
 
 When the line is too long for the terminal, the extension shortens the left side first.
+
+Other extensions can set status texts with `ctx.ui.setStatus()`.
+The extension shows these texts on a second line, below the status line:
+
+- The texts are in the order of their status keys.
+- When no extension sets a status text, the extension shows only the status line.
+- When the second line is too long for the terminal, the extension shortens the end of the line.
+
+#### Settings
+
+Use the pi settings to hide the status texts of other extensions.
+Add a `pi-pure` object to one of these files:
+
+- `~/.pi/agent/settings.json` for all projects.
+- `.pi/settings.json` in a project, for that project only.
+  These settings override the settings in `~/.pi/agent/settings.json`.
+  Pi reads this file only when you trust the project.
+
+| Setting                    | Default | Description                                                     |
+| -------------------------- | ------- | --------------------------------------------------------------- |
+| `status.extensionStatuses` | `true`  | Set `false` to hide all status texts from other extensions.     |
+| `status.hiddenStatusKeys`  | `[]`    | The status keys to hide. Other status texts stay on the screen. |
+
+To hide all status texts from other extensions:
+
+```json
+{
+  "pi-pure": {
+    "status": {
+      "extensionStatuses": false
+    }
+  }
+}
+```
+
+To hide only some status texts, write their status keys:
+
+```json
+{
+  "pi-pure": {
+    "status": {
+      "hiddenStatusKeys": ["mcp", "lint"]
+    }
+  }
+}
+```
+
+A status key is the first argument of `ctx.ui.setStatus()`.
+To find the status key of an extension, examine the source code or the documentation of the extension.
+
+The extension reads the settings when a session starts.
+After you change the settings, run `/reload`.
 
 ### rfc2119
 
