@@ -1,0 +1,10 @@
+no_tty: true
+
+output: false
+
+pre-commit:
+  commands:
+    lint:
+      glob: "*.{ts,tsx,js,jsx,json,md,css,html}"
+      run: "pnpm exec ultracite fix {staged_files}"
+      stage_fixed: true
