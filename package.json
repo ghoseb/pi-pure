@@ -52,19 +52,22 @@
     "lefthook": "^2.2.2",
     "oxfmt": "^0.77.0",
     "oxlint": "^1.92.0",
+    "typebox": "^1.3.27",
     "typescript": "^7.0.2",
     "ultracite": "8.1.1",
     "vitest": "^5.1.0"
   },
   "peerDependencies": {
     "@earendil-works/pi-coding-agent": "*",
-    "@earendil-works/pi-tui": "*"
+    "@earendil-works/pi-tui": "*",
+    "typebox": "*"
   },
   "engines": {
     "node": ">=22.19.0"
   },
   "pi": {
     "extensions": [
+      "./extensions/apply-patch.ts",
       "./extensions/pure-editor.ts",
       "./extensions/pure-status.ts",
       "./extensions/rfc2119.ts"

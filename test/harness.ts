@@ -19,6 +19,7 @@ import type {
   ExtensionAPI,
   ExtensionContext,
   ExtensionUIContext,
+  ToolDefinition,
   KeybindingsManager,
   SessionEntry,
   Theme,
@@ -30,7 +31,7 @@ type FooterFactory = Parameters<ExtensionUIContext["setFooter"]>[0];
 type Handler = (event: unknown, ctx: ExtensionContext) => unknown;
 
 /** Theme that passes strings through unmodified and emits no ANSI codes. */
-function stubTheme(): Theme {
+export function stubTheme(): Theme {
   return {
     fg: (_token: string, s: string) => s,
     bold: (s: string) => s,
@@ -84,6 +85,7 @@ export interface HarnessOptions {
 
 export function createHarness(opts: HarnessOptions = {}) {
   const handlers = new Map<string, Handler[]>();
+  const tools = new Map<string, ToolDefinition>();
   const theme = stubTheme();
   const session: SessionState = opts.session ?? { sessionId: "s1", leafId: null, entries: [] };
   let footerFactory: FooterFactory;
@@ -94,6 +96,9 @@ export function createHarness(opts: HarnessOptions = {}) {
   const api = {
     on: (event: string, handler: Handler) => {
       handlers.set(event, [...(handlers.get(event) ?? []), handler]);
+    },
+    registerTool: (tool: ToolDefinition) => {
+      tools.set(tool.name, tool);
     },
     getSessionName: () => opts.sessionName,
     getThinkingLevel: () => opts.thinkingLevel ?? "off",
@@ -165,6 +170,7 @@ export function createHarness(opts: HarnessOptions = {}) {
   return {
     api,
     handlers,
+    tools,
     session,
     ctx,
     fireEvent,
