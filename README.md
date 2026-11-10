@@ -46,6 +46,35 @@ The right side shows these items:
 
 When the terminal is too narrow, the extension cuts the left side first.
 
+### rfc2119
+
+This extension changes the [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119) keywords in your messages to uppercase before pi sends the messages to the model. The model then gives the keywords their RFC 2119 meaning.
+
+```
+you must not edit the tests and should keep the API
+```
+
+The model gets this text:
+
+```
+you MUST NOT edit the tests and SHOULD keep the API
+```
+
+The extension changes these keywords:
+
+- `MUST`, `MUST NOT`, `REQUIRED`, `SHALL`, `SHALL NOT`
+- `SHOULD`, `SHOULD NOT`, `RECOMMENDED`, `NOT RECOMMENDED`
+- `MAY`, `OPTIONAL`
+- `NEVER`. This word is not in RFC 2119. The extension uses it as a stronger `MUST NOT`.
+
+The extension does not change these items:
+
+1. Text in code blocks and inline code.
+2. Words in paths, URLs, and identifiers, for example `src/must.ts` and `/skill:required`.
+3. Words with a hyphen, for example `must-have` and `non-optional`.
+4. Keywords inside other words, for example `maybe` and `mustard`.
+5. Messages from other extensions.
+
 ## Install
 
 Install the package from npm:
