@@ -48,17 +48,19 @@ When the terminal is too narrow, the extension cuts the left side first.
 
 ## Install
 
-Install the package from a local copy:
+Install the package from npm:
 
 ```sh
-pi install ./path/to/pi-pure
+pi install npm:@ghoseb/pi-pure
 ```
 
-To try one extension for one session, use the `-e` option:
+To try the package for one session, use the `-e` option:
 
 ```sh
-pi -e ./path/to/pi-pure/extensions/pure-editor.ts
+pi -e npm:@ghoseb/pi-pure
 ```
+
+To use only one of the extensions, run `pi config` and disable the other extension.
 
 ## Development
 
@@ -71,7 +73,21 @@ pnpm typecheck   # Check the types.
 pnpm check       # Run the linter and the format check.
 pnpm fix         # Fix the lint and format problems.
 pnpm knip        # Find unused files, exports, and dependencies.
+pnpm changelog   # Show the changelog entries for the next release.
 ```
+
+## Release
+
+Use [Conventional Commits](https://www.conventionalcommits.org) for commit messages. [git-cliff](https://git-cliff.org) uses the commit messages to write `CHANGELOG.md`.
+
+To make a release, do these steps:
+
+1. Run `pnpm release`. The script selects the next version from the commit messages. To set the version yourself, add a version or `major`, `minor`, or `patch`, for example `pnpm release 1.0.0`.
+2. Examine the release commit and `CHANGELOG.md`.
+3. Push the commit and the tag: `git push --follow-tags`.
+4. Publish the package: `npm publish`.
+
+The release script runs the checks and the tests, sets the version in `package.json`, writes `CHANGELOG.md`, and makes a commit and a tag. The script does not push or publish.
 
 ## License
 

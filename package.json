@@ -1,12 +1,33 @@
 {
-  "name": "pi-pure",
+  "name": "@ghoseb/pi-pure",
   "version": "0.1.0",
   "description": "A set of simple pi extensions to provide an uncluttered experience.",
   "keywords": [
-    "pi-package"
+    "editor",
+    "footer",
+    "pi",
+    "pi-extension",
+    "pi-package",
+    "status-line"
   ],
+  "homepage": "https://github.com/ghoseb/pi-pure#readme",
+  "bugs": {
+    "url": "https://github.com/ghoseb/pi-pure/issues"
+  },
   "license": "MIT",
+  "author": "Baishampayan Ghose",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ghoseb/pi-pure.git"
+  },
+  "files": [
+    "extensions",
+    "CHANGELOG.md"
+  ],
   "type": "module",
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "typecheck": "tsc --noEmit",
     "lint": "oxlint",
@@ -16,13 +37,17 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "check": "ultracite check",
-    "fix": "ultracite fix"
+    "fix": "ultracite fix",
+    "changelog": "git-cliff --unreleased --bump",
+    "release": "scripts/release.sh",
+    "prepublishOnly": "pnpm run typecheck && pnpm run check && pnpm run test"
   },
   "devDependencies": {
     "@earendil-works/pi-coding-agent": "^1.5.1",
     "@earendil-works/pi-tui": "^1.5.1",
     "@types/node": "^26.6.6",
     "@vitest/coverage-istanbul": "^5.1.0",
+    "git-cliff": "^2.14.2",
     "knip": "^6.44.2",
     "lefthook": "^2.2.2",
     "oxfmt": "^0.77.0",
@@ -34,6 +59,9 @@
   "peerDependencies": {
     "@earendil-works/pi-coding-agent": "*",
     "@earendil-works/pi-tui": "*"
+  },
+  "engines": {
+    "node": ">=22.19.0"
   },
   "pi": {
     "extensions": [
